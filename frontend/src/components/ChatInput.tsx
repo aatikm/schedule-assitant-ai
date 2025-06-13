@@ -21,52 +21,86 @@ const ChatInput = (props:ChatInputProps) => {
   return (
     <Box
       sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 2,
-        overflow: 'hidden',
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      <Typography variant="h5" align="center" mb={2}>
-        Construction Schedule Assistant
+      <Typography variant="h6" align="center" mb={2}>
+        AI-Powered Construction Scheduler
       </Typography>
 
       {/* Chat area */}
       <Box
         sx={{
           flexGrow: 1,
-          overflowY: 'auto',
-          background: '#f5f5f5',
+          overflowY: "auto",
+          background: "#f5f5f5",
           padding: 2,
           borderRadius: 2,
           mb: 2,
+          border: "1px solid #ccc",
         }}
       >
-        {messages.map((msg: { type: string; text: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; }, index: React.Key | null | undefined) => (
-          <Box
-            key={index}
-            sx={{
-              display: 'flex',
-              justifyContent: msg.type === 'user' ? 'flex-end' : 'flex-start',
-              mb: 1,
-            }}
-          >
-            <Paper
-              elevation={2}
+        {messages.map(
+          (
+            msg: {
+              type: string;
+              text:
+                | string
+                | number
+                | bigint
+                | boolean
+                | React.ReactElement<
+                    unknown,
+                    string | React.JSXElementConstructor<any>
+                  >
+                | Iterable<React.ReactNode>
+                | React.ReactPortal
+                | Promise<
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | React.ReactPortal
+                    | React.ReactElement<
+                        unknown,
+                        string | React.JSXElementConstructor<any>
+                      >
+                    | Iterable<React.ReactNode>
+                    | null
+                    | undefined
+                  >
+                | null
+                | undefined;
+            },
+            index: React.Key | null | undefined
+          ) => (
+            <Box
+              key={index}
               sx={{
-                maxWidth: '75%',
-                p: 1.5,
-                backgroundColor: msg.type === 'user' ? '#1976d2' : '#e0e0e0',
-                color: msg.type === 'user' ? 'white' : 'black',
-                borderRadius: 2,
-                whiteSpace: 'pre-wrap',
+                display: "flex",
+                justifyContent: msg.type === "user" ? "flex-end" : "flex-start",
+                mb: 1,
               }}
             >
-              {msg.text}
-            </Paper>
-          </Box>
-        ))}
+              <Paper
+                elevation={2}
+                sx={{
+                  maxWidth: "75%",
+                  p: 1.5,
+                  backgroundColor: msg.type === "user" ? "#1976d2" : "#e0e0e0",
+                  color: msg.type === "user" ? "white" : "black",
+                  borderRadius: 2,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {msg.text}
+              </Paper>
+            </Box>
+          )
+        )}
         {loading && (
           <Box display="flex" justifyContent="flex-start" pl={1}>
             <CircularProgress size={20} />
@@ -77,9 +111,9 @@ const ChatInput = (props:ChatInputProps) => {
       {/* Input bar */}
       <Box
         sx={{
-          display: 'flex',
+          display: "flex",
           gap: 1,
-          alignItems: 'center',
+          alignItems: "center",
         }}
       >
         <TextField
@@ -90,7 +124,7 @@ const ChatInput = (props:ChatInputProps) => {
           maxRows={4}
           placeholder="Type your construction request..."
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleSubmit();
             }

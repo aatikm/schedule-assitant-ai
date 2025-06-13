@@ -50,8 +50,14 @@ if (match) {
     <div className="App">
       <ReflexContainer orientation="vertical">
         <ReflexElement minSize={200} flex={0.3}>
-          <div className="chat-pane">
-            <ChatInput messages={messages} loading={loading} userPrompt={userPrompt} handleSubmit={handleSubmit} setUserPrompt={setUserPrompt} />
+          <div className="chat-pane" style={{ overflow: "hidden" }}>
+            <ChatInput
+              messages={messages}
+              loading={loading}
+              userPrompt={userPrompt}
+              handleSubmit={handleSubmit}
+              setUserPrompt={setUserPrompt}
+            />
           </div>
         </ReflexElement>
 
@@ -63,7 +69,6 @@ if (match) {
           </div>
         </ReflexElement>
       </ReflexContainer>
-  
     </div>
   );
 }

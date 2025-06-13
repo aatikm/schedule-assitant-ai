@@ -3,33 +3,20 @@ import { Box, TextField, IconButton, CircularProgress, Typography, Paper } from 
 import SendIcon from '@mui/icons-material/Send';
 import axios from 'axios';
 import { BryntumGantt } from '@bryntum/gantt-react';
+type ChatInputProps = {
+  messages: { type: 'user' | 'bot'; text: string }[];
+  loading: boolean;
+  userPrompt: string;
+  handleSubmit: () => Promise<void>;
+  setUserPrompt: React.Dispatch<React.SetStateAction<string>>;
+};
+const ChatInput = (props:ChatInputProps) => {
+  const { messages,handleSubmit,userPrompt, loading, setUserPrompt } = props;
 
-const ChatInput: React.FC = () => {
-  const [userPrompt, setUserPrompt] = useState('');
-  const [messages, setMessages] = useState<{ type: 'user' | 'bot'; text: string }[]>([]);
-  const [scheduleData, setScheduleData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  
+ 
 
-  const handleSubmit = async () => {
-    if (!userPrompt.trim()) return;
-
-    const prompt = userPrompt.trim();
-    setMessages([...messages, { type: 'user', text: prompt }]);
-    setUserPrompt('');
-    setLoading(true);
-
-    try {
-      const res = await axios.post('http://localhost:5000/api/generate-schedule', { prompt });
-      const botMessage = JSON.stringify(res.data, null, 2);
-      setMessages(prev => [...prev, { type: 'bot', text: botMessage }]);
-      setScheduleData(res.data);
-    } catch (err) {
-      setMessages(prev => [...prev, { type: 'bot', text: 'Error generating schedule.' }]);
-      setScheduleData(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   return (
     <Box
@@ -56,7 +43,7 @@ const ChatInput: React.FC = () => {
           mb: 2,
         }}
       >
-        {messages.map((msg, index) => (
+        {messages.map((msg: { type: string; text: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; }, index: React.Key | null | undefined) => (
           <Box
             key={index}
             sx={{
@@ -115,7 +102,7 @@ const ChatInput: React.FC = () => {
       </Box>
 
       {/* Gantt chart */}
-      {scheduleData && (
+      {/* {scheduleData && (
         <Box sx={{ marginTop: 4, width: '100%', height: '600px' }}>
           <BryntumGantt
             project={{
@@ -124,7 +111,7 @@ const ChatInput: React.FC = () => {
             }}
           />
         </Box>
-      )}
+      )} */}
     </Box>
   );
 };

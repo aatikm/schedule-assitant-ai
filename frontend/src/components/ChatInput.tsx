@@ -12,12 +12,6 @@ type ChatInputProps = {
 };
 const ChatInput = (props:ChatInputProps) => {
   const { messages,handleSubmit,userPrompt, loading, setUserPrompt } = props;
-
-  
- 
-
-  
-
   return (
     <Box
       sx={{

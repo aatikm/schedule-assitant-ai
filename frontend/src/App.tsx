@@ -25,12 +25,13 @@ function App() {
     try {
       const res = await axios.post('http://localhost:5000/schedule', { prompt });
       const botMessage = JSON.stringify(res.data, null, 2);
-      setMessages((prev: any) => [...prev, { type: 'bot', text: botMessage }]);
+      // setMessages((prev: any) => [...prev, { type: 'bot', text: botMessage }]);
      
-      const match = res.data.scheduleJson.match(/```json\n([\s\S]*?)```/);
+      // const match = res.data.scheduleJson.match(/```json\n([\s\S]*?)```/);
+      const match = res.data.scheduleJson;
 if (match) {
   try {
-    const parsed = JSON.parse(match[1]);
+    const parsed = JSON.parse(match);
  setScheduleData(parsed);
     console.log(parsed); // Use this for Bryntum Gantt etc.
   } catch (err) {

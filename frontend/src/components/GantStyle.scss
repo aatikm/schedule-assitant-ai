@@ -1,0 +1,367 @@
+// import bryntum theme
+@import "@bryntum/gantt/gantt.stockholm.css";
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+// Giving our gantt some height
+#root {
+  height: 100vh;
+}
+/* src/styles/customStyles.css */
+.rounded-button {
+  border-radius: 5px !important;
+  height: 1rem !important;
+  border: none;
+}
+.no-borders {
+  height: 1rem !important;
+  border: none;
+}
+.text-box {
+  height: 2rem;
+  border: none;
+}
+.bryntum-gantt .b-grid-cell {
+  font-family: 'Roboto', sans-serif; /* Change font family for WBS */
+}
+
+.bryntum-gantt .b-sch-timeaxis-cell {
+  font-family: 'Roboto', sans-serif; /* Change font family for Gantt chart */
+}
+
+.text-content {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.8rem;
+}
+
+.b-toolbar {
+  background-color: white;
+  padding: 2px;
+  height: auto;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.8rem;
+}
+.b-grid-subgrid {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.8rem;
+}
+.b-grid-header-container{
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.8rem;
+}
+/* Custom hover style for grid cells */
+//--------------------------------------------------------
+// Hover State And Select state styling
+//-------------------------------------------------------
+#b-gantt-1-lockedSubgrid{
+  .b-grid-cell:hover {
+    background-color: white !important;
+    border: rgb(42, 42, 42,0.1) solid 1px !important;
+    color:rgb(42, 42, 42) !important
+  }
+  .b-grid-cell.b-selected:hover {
+    background-color: white !important;
+    border: rgb(42, 42, 42,0.4) solid 1px !important;
+    color:rgb(42, 42, 42) !important;
+  }
+}
+
+.b-grid-row:hover{
+  // background-color: rgba(23, 78, 142, 1) !important;
+  border: rgb(42, 42, 42,0.3) solid 1px !important;
+}
+
+.b-sch-timeaxis-cell:hover {
+  background-color: white !important;
+  border: none !important;
+}
+.b-fill-last-column:hover .b-grid-cell:last-child:hover{
+  background-color: white !important;
+  border: none !important;
+}
+
+
+.b-grid-row:not(.b-selected) .b-grid-cell.b-selected {
+  background-color: white !important;
+  border: rgb(42, 42, 42,0.4) solid 1px !important;
+  color:rgb(42, 42, 42) !important;
+}
+
+
+.bryntum-tooltip {
+  color: #ffffff;           /* White text color */
+  border-radius: 15px;       /* Rounded corners */
+  padding: 2px;            /* Padding for the content */
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.7rem;
+  box-shadow: none;
+}
+.bryntum-tooltip ::after{
+  display: none !important;
+  content: none !important;
+}
+.no-tooltip{
+  display: none !important;
+}
+.b-grid-splitter-buttons
+{
+  display:none !important;
+}
+.b-grid-splitter{
+  width: 2px !important;
+}
+
+.b-badge:before{
+  margin-top: 2px;
+  background-color: #ff7272!important;
+}
+
+.b-checkbox{
+  height: 2rem !important;
+}
+.b-fa-solid b-fa-n b-fa{
+  height: 1rem !important;
+}
+
+.b-gantt-task{
+  border-radius:var(--task-border-radius);
+}
+
+.b-sch-dependency-tooltip .b-tooltip-content{
+  grid-template-columns:auto auto;
+}
+.b-sch-dependency-tooltip .b-tooltip-content label{
+  font-size:1em;
+  font-weight:500;
+  margin-inline-end:1em;
+}
+
+.b-gridbase.b-split .b-grid-splitter:not(.b-disabled){
+  flex:0 0 1px;
+}
+.b-gridbase.b-split .b-grid-splitter:not(.b-disabled) .b-grid-splitter-inner{
+  width:1px;
+}
+
+.b-prio-tag{
+  display:inline-flex;
+  background:hsl(var(--event-primary-color-h), var(--event-primary-color-s), var(--event-primary-color-l), 0.2);
+  color:var(--event-primary-color);
+  padding:0.08em 0.6em;
+  border-radius:2px;
+  align-items:center;
+  justify-content:center;
+}
+
+.b-task-rollup-wrap{
+  position:absolute;
+  margin-top:0;
+  grid-area:none;
+  z-index:10;
+}
+
+.b-task-rollup.b-milestone{
+  background-color:var(--event-primary-color);
+  top:0.29em;
+  width:0.4em;
+  height:0.4em;
+  filter:brightness(1.75);
+}
+
+.b-rollups .b-gantt-task-parent:not(.b-milestone-wrap) .b-gantt-task{
+  min-height:1.3em;
+}
+
+
+
+.b-gantt-task-tooltip .field{
+  display:flex;
+  flex-direction:column;
+  font-weight:500;
+}
+.b-gantt-task-tooltip .field label{
+  margin-bottom:0.5em;
+  color:#888;
+}
+
+
+.b-gantt-task-tooltip.b-popup{
+  max-width:30em;
+}
+.b-grid-cell.b-selected{
+  background-color: rgba(154, 214, 255, 0.15)  !important;
+}
+.percentage_done_class_column{
+  color:red
+}
+
+
+//-------------------------------------------------------
+// Task WBS Depth Specific Styling
+//------------------------------------------------------
+/* Task depth 0 (root tasks) */
+.task-depth-0  {
+  background-color: rgba(146, 180, 219,0.3); /* Light blue */
+}
+
+/* Task depth 1 */
+.task-depth-1  {
+  background-color: rgba(249, 234, 230, 0.6)
+}
+
+/* Task depth 2 */
+.task-depth-2 {
+  background-color: rgba(255, 245, 235, 0.6)
+}
+
+/* Task depth 3 */
+.task-depth-3  {
+  background-color:rgba(255, 255, 239, 0.6)
+  /* Light yellow */
+}
+.task-depth-4  {
+  background-color: rgba(248, 255, 241, 0.6)
+}
+.task-depth-5  {
+  background-color: rgb(249, 249, 249,0.5) /* Light yellow */
+}
+.task-critical {
+  background-color:#cd4866 ;
+  opacity: 1;
+  color: white !important;
+}
+
+// --------------------------------------------------------
+// Gantt Lines Parent Child Specific styling
+//--------------------------------------------------------
+.is_parent_style{
+  background:  rgba(121, 164, 213, 0.8);
+}
+.is_child_style{
+  background:  #FFF0CD;
+  color:gray
+}
+
+.b-grid-header .b-sch-timerange.b-sch-line{
+  background-color: rgba(121, 164, 213, 0.8) !important;
+}
+
+//-------------------------------------------------------
+// Task Edit Panel Styling
+//------------------------------------------------------
+.b-panel-header {
+  background:  rgba(23, 78, 142, 1) !important;
+  color:white;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+}
+ // Edit tab Body Color Styling
+ .b-vbox .b-box-center
+ {
+  background: white;
+ }
+
+// Tab Style
+.b-toolbar-content{
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+}
+
+//Body Style
+.b-popup.b-schedulerpro-taskeditor .b-tabpanel-body{
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 12px;
+}
+
+// Drop Down Styling In Pre / Succ
+.b-list{
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 12px;
+  .b-list-item{
+    color: rgb(50, 50, 50) !important;;
+    background-color: white !important;
+  }
+  .b-list-item:hover {
+    background-color:rgba(23, 78, 142, 1) !important;
+    color:white !important;
+  }
+  .b-list-item:focus:not(.b-disabled){
+    background-color:rgba(23, 78, 142, 1) !important;
+    color:white !important;
+  }
+}
+
+
+
+// Button Styling
+#b-button-5{
+ background-color:rgba(23, 78, 142, 1) !important;
+ color:white !important;
+ border-radius: 5px;
+}
+
+#b-button-6{
+  background-color:rgba(23, 78, 142, 1) !important;
+  color:white !important;
+  border-radius: 5px;
+ }
+ #b-button-7{
+  background-color:white !important;
+  color:rgba(23, 78, 142, 1) !important;
+  border-radius: 5px;
+ }
+
+ //----------------------------------------------------
+/* Custom task menu styles */
+// ----------------------------------------------------
+.b-menu {
+  background-color: white !important; /* Change background color */
+}
+
+.b-menuitem {
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 12px;
+  color: rgb(50, 50, 50) !important;;
+  background-color: white !important;
+}
+
+.b-menuitem:focus {
+  background:  rgba(23, 78, 142, 1) !important;
+  color:white !important;
+}
+.b-percentdone-circle.b-full {
+  background-color: rgb(0, 164, 19) !important;
+  padding: 0px;
+  height: 24px !important;
+  width: 24px !important;
+}
+.b-percentdone-circle.b-empty {
+  background-color: rgb(170, 169, 169) !important;
+  padding: 0px;
+  height: 24px !important;
+  width: 24px !important;
+}
+.b-percentdone-circle {
+  background-color: rgb(165, 157, 2) !important;
+  padding: 0px;
+  height: 24px !important;
+  width: 24px !important;
+}
+.b-button {
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 12px;
+  border-radius: 5px !important;
+}
+.b-checkbox{
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 12px;
+}
+.b-panel {
+  .b-button  {
+    transition: background-color 0.2s, color 0.2s;
+    color: #7b7b7b;
+    background-color: transparent !important;
+  }
+}
+.b-panel-header .b-tool {
+  color: #fff;
+}

@@ -6,10 +6,56 @@ const BryntumGanttComponent = () => {
   const projectConfig = {
     startDate: new Date(2024, 0, 1),
     tasksData: [
-      { id: 1, name: 'Project', expanded: true },
-      { id: 2, name: 'Task 1', startDate: '2024-01-01', duration: 5, parentId: 1 },
-      { id: 3, name: 'Task 2', startDate: '2024-01-06', duration: 3, parentId: 1 }
-    ],
+      
+    {
+        "id": 1,
+        "name": "Design",
+        "startDate": "2025-06-17",
+        "duration": 3,
+        "predecessors": [],
+        "durationUnit": "d"
+    },
+    {
+        "id": 2,
+        "name": "Development",
+        "duration": 5,
+        "predecessors": [
+            {
+                "from": 1,
+                "type": 2
+            }
+        ],
+        "startDate": "2025-06-20",
+        "durationUnit": "d"
+    },
+    {
+        "id": 3,
+        "name": "Testing",
+        "duration": 2,
+        "predecessors": [
+            {
+                "from": 2,
+                "type": 2
+            }
+        ],
+        "startDate": "2025-06-25",
+        "durationUnit": "d"
+    },
+    {
+        "id": 4,
+        "name": "Deployment",
+        "duration": 1,
+        "predecessors": [
+            {
+                "from": 3,
+                "type": 2
+            }
+        ],
+        "startDate": "2025-06-27",
+        "durationUnit": "d"
+    }
+]
+    ,
     dependenciesData: [
       { fromTask: 2, toTask: 3 }
     ]

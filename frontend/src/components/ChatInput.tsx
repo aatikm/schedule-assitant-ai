@@ -1,113 +1,125 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, CircularProgress, Paper } from '@mui/material';
+import { Box, TextField, IconButton, CircularProgress, Typography, Paper } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
 import axios from 'axios';
 import { BryntumGantt } from '@bryntum/gantt-react';
-//import '@bryntum/gantt/gantt.stockholm.css';
- 
- 
+
 const ChatInput: React.FC = () => {
-  const [userPrompt, setUserPrompt] = useState<string>('');
-  const [response, setResponse] = useState<string>('');  // still keep string for display
-  const [scheduleData, setScheduleData] = useState<any>(null); // this is parsed JSON for Bryntum
-  const [loading, setLoading] = useState<boolean>(false);
- 
+  const [userPrompt, setUserPrompt] = useState('');
+  const [messages, setMessages] = useState<{ type: 'user' | 'bot'; text: string }[]>([]);
+  const [scheduleData, setScheduleData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async () => {
     if (!userPrompt.trim()) return;
- 
+
+    const prompt = userPrompt.trim();
+    setMessages([...messages, { type: 'user', text: prompt }]);
+    setUserPrompt('');
     setLoading(true);
+
     try {
-      const res = await axios.post('http://localhost:5000/api/generate-schedule', { prompt: userPrompt });
-      setResponse(JSON.stringify(res.data, null, 2)); // for displaying raw response
-      setScheduleData(res.data); // actual parsed JSON for Bryntum
-    } catch (error) {
-      console.error('Error:', error);
-      setResponse('Error generating schedule');
+      const res = await axios.post('http://localhost:5000/api/generate-schedule', { prompt });
+      const botMessage = JSON.stringify(res.data, null, 2);
+      setMessages(prev => [...prev, { type: 'bot', text: botMessage }]);
+      setScheduleData(res.data);
+    } catch (err) {
+      setMessages(prev => [...prev, { type: 'bot', text: 'Error generating schedule.' }]);
       setScheduleData(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
- 
+
   return (
     <Box
       sx={{
+        height: '100%',
         display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f4f6f8',
+        flexDirection: 'column',
         padding: 2,
-        flexDirection: 'column'
+        overflow: 'hidden',
       }}
     >
-      <Paper
+      <Typography variant="h5" align="center" mb={2}>
+        Construction Schedule Assistant
+      </Typography>
+
+      {/* Chat area */}
+      <Box
         sx={{
-          width: '100%',
-          maxWidth: 600,
-          padding: 3,
+          flexGrow: 1,
+          overflowY: 'auto',
+          background: '#f5f5f5',
+          padding: 2,
           borderRadius: 2,
-          boxShadow: 3,
-          backgroundColor: 'white',
+          mb: 2,
         }}
       >
-        <Typography variant="h5" gutterBottom align="center">
-          Construction Schedule Chatbot
-        </Typography>
- 
-        <Box display="flex" flexDirection="column" gap={2}>
-          <TextField
-            fullWidth
-            label="Describe your construction scheduling"
-            variant="outlined"
-            value={userPrompt}
-            onChange={(e) => setUserPrompt(e.target.value)}
-            multiline
-            rows={4}
+        {messages.map((msg, index) => (
+          <Box
+            key={index}
             sx={{
-              borderRadius: 2,
-              '& .MuiOutlinedInput-root': {
+              display: 'flex',
+              justifyContent: msg.type === 'user' ? 'flex-end' : 'flex-start',
+              mb: 1,
+            }}
+          >
+            <Paper
+              elevation={2}
+              sx={{
+                maxWidth: '75%',
+                p: 1.5,
+                backgroundColor: msg.type === 'user' ? '#1976d2' : '#e0e0e0',
+                color: msg.type === 'user' ? 'white' : 'black',
                 borderRadius: 2,
-              },
-            }}
-          />
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={loading}
-            sx={{
-              alignSelf: 'flex-end',
-              borderRadius: 2,
-              paddingX: 3,
-              backgroundColor: '#1976d2',
-              '&:hover': {
-                backgroundColor: '#1565c0',
-              },
-            }}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
-          </Button>
-        </Box>
- 
-        {response && (
-          <Paper
-            sx={{
-              marginTop: 4,
-              padding: 2,
-              backgroundColor: '#f5f5f5',
-              borderRadius: 2,
-              boxShadow: 1,
-            }}
-          >
-            <Typography variant="h6">GPT Generated Schedule:</Typography>
-            <pre>{response}</pre>
-          </Paper>
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {msg.text}
+            </Paper>
+          </Box>
+        ))}
+        {loading && (
+          <Box display="flex" justifyContent="flex-start" pl={1}>
+            <CircularProgress size={20} />
+          </Box>
         )}
-      </Paper>
- 
+      </Box>
+
+      {/* Input bar */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          alignItems: 'center',
+        }}
+      >
+        <TextField
+          value={userPrompt}
+          onChange={(e) => setUserPrompt(e.target.value)}
+          fullWidth
+          multiline
+          maxRows={4}
+          placeholder="Type your construction request..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+        />
+        <IconButton onClick={handleSubmit} disabled={loading}>
+          <SendIcon color="primary" />
+        </IconButton>
+      </Box>
+
+      {/* Gantt chart */}
       {scheduleData && (
-        <Box sx={{ marginTop: 4, width: '100%', height: '600px', maxWidth: '1200px' }}>
+        <Box sx={{ marginTop: 4, width: '100%', height: '600px' }}>
           <BryntumGantt
             project={{
-              startDate: new Date().toISOString().split('T')[0], // today's date
+              startDate: new Date().toISOString().split('T')[0],
               tasksData: scheduleData.tasksData
             }}
           />
@@ -116,5 +128,5 @@ const ChatInput: React.FC = () => {
     </Box>
   );
 };
- 
+
 export default ChatInput;

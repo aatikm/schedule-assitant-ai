@@ -24,8 +24,7 @@ function App() {
 
     try {
       const res = await axios.post('http://localhost:5000/schedule', { prompt });
-      const botMessage = JSON.stringify(res.data, null, 2);
-      // setMessages((prev: any) => [...prev, { type: 'bot', text: botMessage }]);
+      
      
       // const match = res.data.scheduleJson.match(/```json\n([\s\S]*?)```/);
       const match = res.data.scheduleJson;
@@ -35,12 +34,21 @@ if (match) {
  setScheduleData(parsed);
     console.log(parsed); // Use this for Bryntum Gantt etc.
   } catch (err) {
+    const botMessage = JSON.stringify(res.data, null, 2);
+    console.log('Invalid JSON in response:', botMessage);
+      setMessages((prev: any) => [...prev, { type: 'bot', text: JSON.parse(botMessage).scheduleJson }]);
     console.error('Invalid JSON:', err);
   }
 } else {
+  const botMessage = JSON.stringify(res.data, null, 2);
+  console.log('No JSON block found in response:', botMessage);
+  
+      setMessages((prev: any) => [...prev, { type: 'bot', text: JSON.parse(botMessage).scheduleJson }]);
   console.error('No JSON block found');
 }
     } catch (err) {
+      console.log('Error generating schedule:', err);
+      
       setMessages(prev => [...prev, { type: 'bot', text: 'Error generating schedule.' }]);
       setScheduleData(null);
     } finally {

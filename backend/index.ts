@@ -11,14 +11,14 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// In-memory store for schedule JSON
+// In-memory store
 let currentScheduleJson: string | null = null;
+let currentThreadId: string | null = null; // NEW: thread memory
 
-// Simple JSON validity check
+// JSON validity check
 const isValidJson = (text: string) => {
   try {
     const parsed = JSON.parse(text);
-    // Basic check for required Bryntum fields
     return parsed && parsed.tasks && parsed.tasks.rows;
   } catch {
     return false;
@@ -34,43 +34,53 @@ app.post('/schedule', async (req, res) => {
   };
 
   try {
-    // Include current schedule in prompt if available
     const effectivePrompt = currentScheduleJson
       ? `This is the current schedule JSON:\n${currentScheduleJson}\n\nNow, based on this schedule, ${userPrompt}`
       : userPrompt;
 
-    const thread = await axios.post("https://api.openai.com/v1/threads", {}, { headers });
+    // REUSE existing thread if possible
+    let threadId = currentThreadId;
+    console.log(`Using thread ID: ${threadId}`);
+    if (!threadId) {
+      const thread = await axios.post("https://api.openai.com/v1/threads", {}, { headers });
+      threadId = thread.data.id;
+      currentThreadId = threadId;
+    }
 
+    // Post user message
     await axios.post(
-      `https://api.openai.com/v1/threads/${thread.data.id}/messages`,
+      `https://api.openai.com/v1/threads/${threadId}/messages`,
       { role: "user", content: effectivePrompt },
       { headers }
     );
 
+    // Start run
     const run = await axios.post(
-      `https://api.openai.com/v1/threads/${thread.data.id}/runs`,
+      `https://api.openai.com/v1/threads/${threadId}/runs`,
       { assistant_id: process.env.ASSISTANT_ID },
       { headers }
     );
 
+    // Wait for run to complete
     let status = "queued";
     while (["queued", "in_progress"].includes(status)) {
       await new Promise(resolve => setTimeout(resolve, 1500));
       const runStatus = await axios.get(
-        `https://api.openai.com/v1/threads/${thread.data.id}/runs/${run.data.id}`,
+        `https://api.openai.com/v1/threads/${threadId}/runs/${run.data.id}`,
         { headers }
       );
       status = runStatus.data.status;
     }
 
+    // Get final messages
     const messages = await axios.get(
-      `https://api.openai.com/v1/threads/${thread.data.id}/messages`,
+      `https://api.openai.com/v1/threads/${threadId}/messages`,
       { headers }
     );
 
     const content = messages.data.data[0].content[0].text.value;
 
-    // Try to extract JSON block from response if it's embedded
+    // Extract JSON block
     const match = content.match(/```json\n([\s\S]*?)```/) || content.match(/({[\s\S]*})/);
     const jsonText = match ? match[1] : null;
 
@@ -91,6 +101,7 @@ app.post('/schedule', async (req, res) => {
 
 app.post('/reset-schedule', (req, res) => {
   currentScheduleJson = null;
+  currentThreadId = null; // RESET thread as well
   res.json({ message: "Schedule reset" });
 });
 

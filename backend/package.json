@@ -1,4 +1,14 @@
 {
+  "name": "schedule-assistant-backend",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "dev": "node --inspect -r ts-node/register index.ts",
+    "debug": "node --inspect-brk=9229 -r ts-node/register index.ts",
+    "build": "tsc",
+    "watch": "ts-node --watch index.ts"
+  },
   "dependencies": {
     "axios": "^1.9.0",
     "cors": "^2.8.5",

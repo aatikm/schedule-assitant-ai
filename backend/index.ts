@@ -28,9 +28,8 @@ const isValidJson = (text: string) => {
 app.post('/schedule', async (req, res) => {
   const userPrompt = req.body.prompt;
   const headers = {
-    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-    'Content-Type': 'application/json',
-    'OpenAI-Beta': 'assistants=v2'
+    'api-key': process.env.OPENAI_API_KEY,
+    'Content-Type': 'application/json'
   };
 
   try {
@@ -38,47 +37,19 @@ app.post('/schedule', async (req, res) => {
       ? `This is the current schedule JSON:\n${currentScheduleJson}\n\nNow, based on this schedule, ${userPrompt}`
       : userPrompt;
 
-    // REUSE existing thread if possible
-    let threadId = currentThreadId;
-    console.log(`Using thread ID: ${threadId}`);
-    if (!threadId) {
-      const thread = await axios.post("https://api.openai.com/v1/threads", {}, { headers });
-      threadId = thread.data.id;
-      currentThreadId = threadId;
-    }
+    const endpoint = `https://sivac-m74yevap-eastus2.openai.azure.com/openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${process.env.AZURE_OPENAI_API_VERSION}`;
 
-    // Post user message
-    await axios.post(
-      `https://api.openai.com/v1/threads/${threadId}/messages`,
-      { role: "user", content: effectivePrompt },
-      { headers }
-    );
+    const requestBody = {
+      messages: [
+        { role: "system", content: "You are a helpful assistant for scheduling." },
+        { role: "user", content: effectivePrompt }
+      ],
+      max_tokens: 1024,
+      temperature: 0.7
+    };
 
-    // Start run
-    const run = await axios.post(
-      `https://api.openai.com/v1/threads/${threadId}/runs`,
-      { assistant_id: process.env.ASSISTANT_ID },
-      { headers }
-    );
-
-    // Wait for run to complete
-    let status = "queued";
-    while (["queued", "in_progress"].includes(status)) {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const runStatus = await axios.get(
-        `https://api.openai.com/v1/threads/${threadId}/runs/${run.data.id}`,
-        { headers }
-      );
-      status = runStatus.data.status;
-    }
-
-    // Get final messages
-    const messages = await axios.get(
-      `https://api.openai.com/v1/threads/${threadId}/messages`,
-      { headers }
-    );
-
-    const content = messages.data.data[0].content[0].text.value;
+    const response = await axios.post(endpoint, requestBody, { headers });
+    const content = response.data.choices[0].message.content;
 
     // Extract JSON block
     const match = content.match(/```json\n([\s\S]*?)```/) || content.match(/({[\s\S]*})/);
@@ -108,3 +79,4 @@ app.post('/reset-schedule', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+ 

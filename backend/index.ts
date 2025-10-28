@@ -3,12 +3,16 @@ import axios from "axios";
 import cors from "cors";
 import dotenv from "dotenv";
 import MiniSearch from "minisearch";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.use(express.json());
@@ -17,7 +21,7 @@ const PORT = process.env.PORT || 5000;
 
 // In-memory store
 let currentScheduleJson: string | null = null;
-let currentThreadId: string | null = null; // NEW: thread memory
+let currentThreadId: string | null = null; // thread memory
 
 // JSON validity check
 const isValidJson = (text: string) => {
@@ -65,9 +69,9 @@ app.post("/schedule", async (req, res) => {
 
     if (jsonText && isValidJson(jsonText)) {
       currentScheduleJson = jsonText;
-      console.log("✅ JSON schedule updated");
+      console.log("JSON schedule updated");
     } else {
-      console.log("⚠️ No valid JSON found. Schedule remains unchanged.");
+      console.log(" No valid JSON found. Schedule remains unchanged.");
     }
 
     res.json({ scheduleJson: content });
@@ -77,11 +81,155 @@ app.post("/schedule", async (req, res) => {
   }
 });
 
+//#region Function/Tool Call endpoint
+
+app.post("/mcp-load-and-query", async (req: any, res: any) => {
+  const { projectNumber, token, prompt } = req.body || {};
+
+  if (!projectNumber || !token)
+    return res.status(400).json({ error: "projectNumber and token required" });
+
+  try {
+    console.log(` User asked: ${prompt}`);
+    console.log(
+      ` Preparing function-call-enabled request for project ${projectNumber}`
+    );
+
+    //  Build messages
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are a construction scheduling assistant that can analyze Primavera P6 schedule data. " +
+          "You may call the function 'get_project_schedule' to fetch project data as needed. " +
+          "Use professional scheduling terminology (critical path, float, WBS, baseline variance, etc.).",
+      },
+      { role: "user", content: prompt },
+    ];
+
+    //  Define function schema for the model to use
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "get_project_schedule",
+          description: "Fetch Primavera P6 schedule data for a given project.",
+          parameters: {
+            type: "object",
+            properties: {
+              projectNumber: {
+                type: "string",
+                description:
+                  "The Primavera project baseline ID to fetch schedule data for.",
+              },
+              token: {
+                type: "string",
+                description: "Bearer token for Primavera API authentication.",
+              },
+            },
+            required: ["projectNumber", "token"],
+          },
+        },
+      },
+    ];
+
+    //  First call: model checks if any tools available
+    const firstResp = await axios.post(
+      `${process.env.AZURE_OPENAI_ENDPOINT}/openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`,
+      {
+        model: process.env.AZURE_OPENAI_DEPLOYMENT,
+        messages,
+        tools,
+        tool_choice: {
+          type: "function",
+          function: { name: "get_project_schedule" },
+        },
+      },
+      {
+        headers: {
+          "api-key": process.env.OPENAI_API_KEY!,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const firstMessage = firstResp.data.choices[0].message;
+    const toolCalls = firstMessage.tool_calls;
+
+    if (!toolCalls || toolCalls.length === 0) {
+      console.log(
+        " Model didn’t request tool access, returning its direct answer."
+      );
+      return res.json({ answer: firstMessage.content });
+    }
+
+    //  Handle the tool call (fetch Primavera data)
+    const call = toolCalls[0];
+    console.log(` Model invoked tool '${call.function.name}' with args:`, {
+      projectNumber,
+    });
+
+    const p6Resp = await axios.get(
+      `${process.env.P6_API_URL}/p6-activites?baselineId=${projectNumber}`,
+      {
+        headers: {
+          accept: "application/json;odata=verbose",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const scheduleData = p6Resp.data;
+
+    //  Return tool response to LLM for final reasoning
+    const toolResponse = {
+      role: "tool",
+      tool_call_id: call.id,
+      content: JSON.stringify({
+        totalTasks: scheduleData?.tasks?.children?.length ?? 0,
+        sampleTasks: scheduleData?.tasks?.children ?? [],
+      }),
+    };
+
+    const secondResp = await axios.post(
+      `${process.env.AZURE_OPENAI_ENDPOINT}/openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`,
+      {
+        model: process.env.AZURE_OPENAI_DEPLOYMENT,
+        messages: [...messages, firstMessage, toolResponse],
+        // temperature: 0.3,
+      },
+      {
+        headers: {
+          "api-key": process.env.OPENAI_API_KEY!,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const finalMessage = secondResp.data.choices[0].message;
+    console.log(" Final LLM response ready");
+    return res.json({ answer: finalMessage.content });
+  } catch (err: any) {
+    console.error(" Function call failed:", err.response?.data || err.message);
+    return res.status(500).json({
+      error: "schedule query failed",
+      details:
+        typeof err.response?.data === "object"
+          ? JSON.stringify(err.response.data, null, 2)
+          : err.response?.data || err.message,
+    });
+  }
+});
+
+//#endregion Function/Tool Call endpoint
+
 app.post("/reset-schedule", (req, res) => {
   currentScheduleJson = null;
   currentThreadId = null; // RESET thread as well
   res.json({ message: "Schedule reset" });
 });
+
+//#region Indexing with MiniSearch
 
 /* ---------- Types (unchanged) ---------- */
 type P6Task = {
@@ -372,7 +520,7 @@ function searchIndex(rawQx: any, k = 250) {
     combineWith: "OR" as const,
   };
 
-  const contains = (field: unknown, needle: string) => {
+  const contains = (field: any, needle: string) => {
     if (!field) return false;
     const n = needle.toLowerCase();
     if (Array.isArray(field))
@@ -571,6 +719,8 @@ app.post("/llm-project-query", async (req: any, res: any) => {
     return res.status(500).json({ error: "LLM pipeline failed" });
   }
 });
+
+//#endregion Indexing with MiniSearch
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
